@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+body {
+  background-color: #0a2e1f; 
+  color: white;
+  overflow-x: hidden; 
+}
+
+/* =========================================
+   1. YOUR JAR CSS (Untouched)
+========================================= */
+.board {
+  width: 380px;
+  max-width: 100%;
+  border-radius: 16px;
+  background: radial-gradient(circle at top, #216b3a 0, #083019 50%, #020608);
+  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.8);
+  padding: 16px 12px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.jar-scene {
+  width: 260px;
+  height: 230px; 
+  perspective: 800px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.jar-dome {
+  position: relative;
+  width: 190px;
+  height: 190px; /* Increased from 160px */
+  border-radius: 95px 95px 20px 20px; /* Smoothed curve for the new height */
+  transform-style: preserve-3d;
+  transform: rotateX(24deg) translateY(12px);
+}
+.jar-dome-shake {
+  animation: jar-shake 0.7s ease-in-out infinite;
+}
+
+@keyframes jar-shake {
+  0% { transform: rotateX(24deg) translateY(12px) translateX(0); }
+  25% { transform: rotateX(24deg) translateY(12px) translateX(-3px); }
+  50% { transform: rotateX(24deg) translateY(12px) translateX(3px); }
+  75% { transform: rotateX(24deg) translateY(12px) translateX(-1px); }
+  100% { transform: rotateX(24deg) translateY(12px) translateX(0); }
+}
+
+/* glass look */
+.jar-glass {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at top, #ffffff3b, #ffffff07 75%, #000 100%);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 0 35px rgba(255, 255, 255, 0.4) inset,
+    0 18px 30px rgba(0, 0, 0, 0.9);
+  /* THE FIX: Pulls the glass forward in 3D space so the dice don't poke through! */
+  /* transform: translateZ(50px); */
+}
+
+.jar-table {
+  position: absolute;
+  left: 50%;
+  bottom: 0px; 
+  width: 170px;
+  height: 75px; /* Your desired height! */
+  /* REMOVED rotateX. Now it just centers the perfect oval! */
+  transform: translateX(-50%); 
+  background: radial-gradient(circle, #1c7a3b 0, #04441f 60%, #000 100%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 16px rgba(0, 0, 0, 0.9),
+    inset 0 0 10px rgba(0,0,0,0.5), /* Added a tiny inner shadow for depth */
+    0 0 0 2px rgba(0, 0, 0, 0.7);
+}
+.timer-badge {
+  position: absolute;
+  top: 4px;
+  right: 18px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffd34d, #ff8a00);
+  color: #3c1f00;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+  z-index: 50;
+}
+
+/* =========================================
+   2. THE SCRAMBLER DICE (Scaled for the new Dome)
+========================================= */
+.locked-die {
+  width: 46px;
+  height: 46px;
+  position: absolute;
+  transform-style: preserve-3d;
+  /* Adjusted the angle slightly so they sit perfectly flat on your jar-table */
+  transform: translateZ(45px) rotateX(-65deg) rotateY(45deg);
+}
+
+.static-face {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  border-radius: 2px;
+  border: 1px solid #ccc;
+  backface-visibility: hidden;
+}
+
+.face-top {
+  background: linear-gradient(135deg, #ffffff, #f0f0f0);
+  transform: rotateX(90deg) translateZ(23px); /* 23 is half of 46 */
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.05);
+}
+
+.face-left {
+  background: linear-gradient(135deg, #e0e0e0, #cccccc);
+  transform: rotateY(-90deg) translateZ(23px);
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+}
+
+.face-right {
+  background: linear-gradient(135deg, #d0d0d0, #bbbbbb);
+  transform: rotateY(0deg) translateZ(23px);
+  box-shadow: inset 0 0 14px rgba(0,0,0,0.2);
+}
+
+/* --- THE ELEGANT SMOOTH BOUNCE --- */
+@keyframes premium-bounce {
+  0%, 100% { 
+    /* Grounded state: Perfectly locked into your custom table angle */
+    transform: translateZ(45px) rotateX(-65deg) rotateY(45deg) translateX(0px) translateY(0px) rotateZ(0deg); 
+  }
+  50% { 
+    /* Peak of the bounce: Moves up 35px, drifts slightly left, twists gently */
+    transform: translateZ(45px) rotateX(-65deg) rotateY(45deg) translateX(-4px) translateY(-35px) rotateZ(12deg); 
+  }
+}
+
+.is-bouncing {
+  /* ease-in-out makes it slow down at the top of the arc like real gravity */
+  animation: premium-bounce 0.45s ease-in-out infinite;
+}
