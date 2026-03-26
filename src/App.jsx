@@ -368,7 +368,7 @@ useEffect(() => {
   const rollSound = audioCache['roll.mp3']; // Grab the sound you already loaded
 
   // 👉 THE FIX: We added "&& currentUser" so it ONLY plays if someone is logged in
-  if (gameState === 'ROLLING' && currentUser) {
+  if (gameState === 'ROLLING' && currentUser && currentUser.role !== 'admin') {
     if (rollSound) {
       rollSound.loop = true; // Make it loop
       const playPromise = rollSound.play();
