@@ -201,9 +201,13 @@ useEffect(() => {
         setPastResults(prev => [data.result, ...prev.slice(0, 15)]);
         const myBets = betsRef.current;
         const { total } = data.result;
+        
         let wonAmount = 0;
+        
+        // 👉 NEW: Calculate the TOTAL amount the player put on the table this round
+        const totalWageredThisRound = Object.values(myBets).reduce((sum, amount) => sum + amount, 0);
 
-        // --- UPDATED: Check ALL bets including Exact Numbers ---
+        // Calculate gross payout
         if (myBets['DOWN'] && total < 7) wonAmount += (myBets['DOWN'] * MULTIPLIERS['DOWN']);
         if (myBets['UP'] && total > 7) wonAmount += (myBets['UP'] * MULTIPLIERS['UP']);
         if (myBets['LUCKY_7'] && total === 7) wonAmount += (myBets['LUCKY_7'] * MULTIPLIERS['LUCKY_7']);
@@ -211,13 +215,18 @@ useEffect(() => {
         // This single magic line checks for exact number wins!
         if (myBets[`NUM_${total}`]) wonAmount += (myBets[`NUM_${total}`] * MULTIPLIERS[`NUM_${total}`]);
 
-        // If they won money, trigger the celebration!
-        if (wonAmount > 0) {
+        // 👉 THE FIX: Only fire the celebration if Gross Payout > Total Wagered (Net Profit!)
+        if (wonAmount > totalWageredThisRound) {
           playSound('win.mp3');
           fireConfetti(); // 🎊 BOOM!
-          setWinMessage(`+₹${wonAmount}`); // Show the popup
           
-          // Secretly update their visual wallet so the number goes up!
+          // Display the gross payout on the banner
+          setWinMessage(`+₹${wonAmount}`); 
+        }
+
+        // Secretly update their visual wallet if they won *anything* back, 
+        // even if it was a net loss and we didn't throw confetti for it.
+        if (wonAmount > 0) {
           setCurrentUser(prev => prev ? { ...prev, walletBalance: prev.walletBalance + wonAmount } : null);
         }
       }
