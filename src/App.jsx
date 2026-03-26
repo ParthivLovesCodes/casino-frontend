@@ -312,26 +312,47 @@ const handlePlaceBet = async (betTarget) => {
     }
   };
 
-  const handleDoubleBets = () => {
+  const handleDoubleBets = async () => {
     if (gameState !== 'BETTING') return;
-    if (totalBetAmount === 0) return; // Nothing to double!
+    if (totalBetAmount === 0) return; 
     
-    // Check if they have enough money to double their current bet
     if (currentUser.walletBalance < totalBetAmount) {
-      // Assuming you have a showMessage or toast function, or just alert:
       alert("Insufficient balance to double your bets!"); 
       return;
     }
 
-    // Multiply every active bet by 2
-    const doubledBets = { ...bets };
-    for (const target in doubledBets) {
-      doubledBets[target] *= 2;
+    const token = localStorage.getItem('casinoToken');
+
+    try {
+      // 1. Send every extra bet to the server simultaneously
+      const betPromises = Object.entries(bets).map(([target, amount]) => {
+        return fetch(`${BACKEND_URL}/api/bet`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ betTarget: target, amount: amount }) // Betting the same amount again = Doubling
+        });
+      });
+
+      // 2. Wait for the server to confirm all of them
+      const results = await Promise.all(betPromises);
+      for (const res of results) {
+        if (!res.ok) throw new Error("Server rejected one of the bets.");
+      }
+
+      // 3. IF SERVER SAYS OK: Update the UI!
+      const doubledBets = { ...bets };
+      for (const target in doubledBets) {
+        doubledBets[target] *= 2;
+      }
+      
+      setBets(doubledBets);
+      setCurrentUser(prev => ({ ...prev, walletBalance: prev.walletBalance - totalBetAmount }));
+      playSound('chip.mp3');
+
+    } catch (error) {
+      console.error("Double Bet Error:", error);
+      alert("Error doubling bets. Refresh to see true balance.");
     }
-    
-    setBets(doubledBets);
-    // Deduct the *additional* amount from their wallet
-    setCurrentUser(prev => ({ ...prev, walletBalance: prev.walletBalance - totalBetAmount }));
   };
  // 1. Dedicated useEffect for the Rolling Sound
 useEffect(() => {
@@ -368,15 +389,41 @@ useEffect(() => {
   // --- 3. AUTO-BET TRIGGER (Fires when a new round starts) ---
   useEffect(() => {
     if (gameState === 'BETTING' && isAuto && Object.keys(savedBets).length > 0) {
-      const savedTotal = Object.values(savedBets).reduce((a, b) => a + b, 0);
       
-      if (currentUser?.walletBalance >= savedTotal) {
-        setBets(savedBets);
-        setCurrentUser(prev => ({ ...prev, walletBalance: prev.walletBalance - savedTotal }));
-      } else {
-        alert("Insufficient balance for Auto-Bet. Auto disabled.");
-        setIsAuto(false);
-      }
+      const placeAutoBets = async () => {
+        const savedTotal = Object.values(savedBets).reduce((a, b) => a + b, 0);
+        
+        if (currentUser?.walletBalance >= savedTotal) {
+          const token = localStorage.getItem('casinoToken');
+          
+          try {
+            // 1. Send all memorized auto-bets to the server
+            const betPromises = Object.entries(savedBets).map(([target, amount]) => {
+              return fetch(`${BACKEND_URL}/api/bet`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ betTarget: target, amount: amount })
+              });
+            });
+
+            await Promise.all(betPromises);
+
+            // 2. Update UI only after server confirms
+            setBets(savedBets);
+            setCurrentUser(prev => ({ ...prev, walletBalance: prev.walletBalance - savedTotal }));
+            playSound('chip.mp3');
+
+          } catch (err) {
+            console.error("Auto-Bet Failed:", err);
+            setIsAuto(false);
+          }
+        } else {
+          alert("Insufficient balance for Auto-Bet. Auto disabled.");
+          setIsAuto(false);
+        }
+      };
+
+      placeAutoBets();
     }
   }, [gameState]);
 
