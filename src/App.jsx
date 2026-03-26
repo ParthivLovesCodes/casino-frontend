@@ -235,6 +235,19 @@ useEffect(() => {
     };
   }, []);
 
+const handleSecureLogout = () => {
+    // 1. Force every sound in your cache to pause and rewind
+    Object.values(audioCache).forEach(audio => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+
+    // 2. Wipe the player's session and close the menu
+    localStorage.removeItem('casinoToken');
+    setCurrentUser(null);
+    setIsMenuOpen(false);
+  };
+
 const handlePlaceBet = async (betTarget) => {
     // 1. Check if the timer allows betting
     if (gameState !== 'BETTING') return;
@@ -385,12 +398,7 @@ useEffect(() => {
           <Login onLoginSuccess={(userData) => setCurrentUser(userData)} />
         ) : currentUser.role === 'admin' ? (
           // 2. LOGGED IN AS ADMIN -> Show Back Office
-          <AdminDashboard 
-            onLogout={() => {
-              localStorage.removeItem('casinoToken');
-              setCurrentUser(null);
-            }} 
-          />
+          <AdminDashboard onLogout={handleSecureLogout} />
         ) : (
           // 3. LOGGED IN AS PLAYER -> Show Casino Floor
           <>
@@ -445,17 +453,15 @@ useEffect(() => {
                   </div>
 
                   {/* Bottom Logout Button */}
-                  <div className="p-4 border-t border-green-900/50">
-                    <button 
-                      onClick={() => { 
-                        localStorage.removeItem('casinoToken'); 
-                        setCurrentUser(null); 
-                      }}
-                      className="w-full py-3 bg-red-900/80 hover:bg-red-600 text-white rounded-xl font-black uppercase tracking-widest border border-red-500/50 transition-all shadow-lg"
-                    >
-                      Secure Logout
-                    </button>
-                  </div>
+                  {/* Bottom Logout Button */}
+                    <div className="p-4 border-t border-green-900/50">
+                      <button 
+                        onClick={handleSecureLogout}
+                        className="w-full py-3 bg-red-900/80 hover:bg-red-600 text-white rounded-xl font-black uppercase tracking-widest border border-red-500/50 transition-all shadow-lg"
+                      >
+                        Secure Logout
+                      </button>
+                    </div>
                 </div>
               </>
             )}
