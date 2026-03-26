@@ -40,16 +40,25 @@ const AdminDashboard = ({ onLogout }) => {
   const token = localStorage.getItem('casinoToken');
   
   // --- FETCH REAL PLAYERS ON LOAD ---
+  // --- FETCH REAL PLAYERS & TRUE ENGINE STATE ON LOAD ---
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [playersRes, requestsRes] = await Promise.all([
+        const [playersRes, requestsRes, engineRes] = await Promise.all([
           fetch(`${BACKEND_URL}/api/admin/players`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${BACKEND_URL}/api/admin/banking/requests`, { headers: { 'Authorization': `Bearer ${token}` } })
+          fetch(`${BACKEND_URL}/api/admin/banking/requests`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          // 👉 ADDED THIS: Ask the server for the true engine mode
+          fetch(`${BACKEND_URL}/api/admin/engine-mode`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
         
         if (playersRes.ok) setPlayers(await playersRes.json());
         if (requestsRes.ok) setPendingRequests(await requestsRes.json());
+        
+        // 👉 ADDED THIS: Update the UI to match the backend's true state
+        if (engineRes.ok) {
+            const engineData = await engineRes.json();
+            setEngineMode(engineData.mode);
+        }
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err);
       }
