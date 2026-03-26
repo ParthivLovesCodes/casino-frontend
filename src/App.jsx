@@ -427,11 +427,36 @@ useEffect(() => {
     }
   }, [gameState]);
 
-  const handleClearBets = () => {
+ const handleClearBets = async () => {
+    // 1. Basic checks to prevent unnecessary network requests
     if (gameState !== 'BETTING') return;
-    setBets({});
-  };
+    if (Object.keys(bets).length === 0) return; 
 
+    const token = localStorage.getItem('casinoToken');
+
+    try {
+      // 2. Send the secure DELETE request to the backend
+      const response = await fetch(`${BACKEND_URL}/api/bet/clear`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
+
+      // 3. IF SERVER SAYS OK: Wipe the chips off the screen and restore the visual wallet!
+      setBets({});
+      setCurrentUser(prev => ({ ...prev, walletBalance: data.newBalance }));
+      playSound('chip.mp3'); // Optional: Play sound to confirm removal
+
+    } catch (error) {
+      console.error("Clear Bets Error:", error);
+      alert(`⚠️ ${error.message}`);
+    }
+  };
   const totalBetAmount = Object.values(bets).reduce((sum, amount) => sum + amount, 0);
   
   if (isLoadingAuth) {
