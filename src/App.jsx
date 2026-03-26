@@ -174,6 +174,11 @@ useEffect(() => {
 
     socket.on('initHistory', (serverHistory) => {
       setPastResults(serverHistory);
+      
+      // If the server has history, snap the physical dice to the newest roll
+      if (serverHistory && serverHistory.length > 0) {
+        setRollResult(serverHistory[0]); 
+      }
     });
 
     socket.on('timerTick', (data) => {
