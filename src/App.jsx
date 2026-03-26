@@ -72,17 +72,7 @@ function App() {
   const [savedBets, setSavedBets] = useState({});
   const [globalPool, setGlobalPool] = useState({});
   // Mock past results feed
-  const [pastResults, setPastResults] = useState([
-    { dice1: 4, dice2: 2, total: 6 },
-    { dice1: 1, dice2: 6, total: 7 },
-    { dice1: 3, dice2: 5, total: 8 },
-    { dice1: 4, dice2: 4, total: 8 },
-    { dice1: 1, dice2: 2, total: 3 },
-    { dice1: 6, dice2: 5, total: 11 },
-    { dice1: 4, dice2: 3, total: 7 },
-    { dice1: 2, dice2: 6, total: 8 },
-    { dice1: 1, dice2: 1, total: 2 },
-  ]);
+  const [pastResults, setPastResults] = useState([]);
   const [bets, setBets] = useState(() => {
   // Check if we have chips memorized from before a refresh
   const savedChips = sessionStorage.getItem('tempBoardBets');
@@ -180,6 +170,10 @@ useEffect(() => {
   useEffect(() => {
     socket.on('connect', () => {
       console.log('🟢 Connected to Game Server!');
+    });
+
+    socket.on('initHistory', (serverHistory) => {
+      setPastResults(serverHistory);
     });
 
     socket.on('timerTick', (data) => {
