@@ -64,7 +64,6 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [selectedChip, setSelectedChip] = useState(200);
-  const [bets, setBets] = useState({});
   const [winMessage, setWinMessage] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showBanking, setShowBanking] = useState(false);
@@ -84,6 +83,11 @@ function App() {
     { dice1: 2, dice2: 6, total: 8 },
     { dice1: 1, dice2: 1, total: 2 },
   ]);
+  const [bets, setBets] = useState(() => {
+  // Check if we have chips memorized from before a refresh
+  const savedChips = sessionStorage.getItem('tempBoardBets');
+  return savedChips ? JSON.parse(savedChips) : {};
+});
 
   const betsRef = useRef(bets);
   useEffect(() => {
@@ -234,6 +238,16 @@ useEffect(() => {
       socket.off('gameStatus');
     };
   }, []);
+  // Dedicated useEffect to memorize chips during a refresh
+useEffect(() => {
+  if (Object.keys(bets).length > 0) {
+    // If there are chips on the board, save them to browser memory
+    sessionStorage.setItem('tempBoardBets', JSON.stringify(bets));
+  } else {
+    // When the round resets and bets become {}, wipe the memory
+    sessionStorage.removeItem('tempBoardBets');
+  }
+}, [bets]);
 
 const handleSecureLogout = () => {
     // 1. Force every sound in your cache to pause and rewind
