@@ -324,10 +324,10 @@ const handlePlaceBet = async (betTarget) => {
 useEffect(() => {
   const rollSound = audioCache['roll.mp3']; // Grab the sound you already loaded
 
-  if (gameState === 'ROLLING') {
+  // 👉 THE FIX: We added "&& currentUser" so it ONLY plays if someone is logged in
+  if (gameState === 'ROLLING' && currentUser) {
     if (rollSound) {
       rollSound.loop = true; // Make it loop
-      // Use your existing safe play mechanism, or play directly catching errors
       const playPromise = rollSound.play();
       if (playPromise !== undefined) {
         playPromise.catch(error => console.warn(`🔇 Roll sound blocked`, error));
@@ -342,7 +342,7 @@ useEffect(() => {
       rollSound.currentTime = 0; 
     }
   };
-}, [gameState]); // Notice 'bets' is removed so it never triggers overlapping sounds!
+}, [gameState, currentUser]); // Notice 'bets' is removed so it never triggers overlapping sounds!
 
 
 // 2. Dedicated useEffect for Saving Bets
